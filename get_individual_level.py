@@ -35,9 +35,16 @@ def convert_stepf2_note(stepf2_note):
 def convert_chart(string_format):
     split_on_line_break = string_format.split("\n")
     result = []
+    measure = []
+    max_measure = 0
     for line in split_on_line_break:
         row = []
-        if not line or ',' in line or '//' in line:
+        if not line:
+            continue
+        if ',' in line or '//' in line:
+            result.append(measure)
+            max_measure = max(max_measure, len(measure))
+            measure = []
             continue
 
         encounter_open_bracket = False
@@ -67,9 +74,12 @@ def convert_chart(string_format):
         # Ensure that the length is correct for either singles or doubles
         if len(row) != 5 and len(row) != 10:
             raise Exception("Error in parsing row")
+        measure.append(row)
 
-        result.append(row)
-    return result
+    if measure:
+        result.append(measure)
+        max_measure = max(max_measure, len(measure))
+    return (result, max_measure)
 
 def deduce_from_cut(cut_string):
     if cut_string == 'SHORTCUT':
@@ -99,7 +109,7 @@ def analyse_half(chart_array):
 
 folder = 'steps/'
 output = []
-header = ['title', 'artist', 'bpm', 'length', 'bpm_change_count', 'stops_gimmick_count', 'scroll_speed_gimmick_count']
+header = ['title', 'artist', 'bpm', 'length', 'bpm_change_count', 'stops_gimmick_count', 'scroll_speed_gimmick_count', 'finest_note_division']
 output.append(header)
 with os.scandir(folder) as entries:
     for entry in entries:
@@ -137,9 +147,11 @@ with os.scandir(folder) as entries:
                 bpm_change_count = count(chart_dict['BPMS'])
                 stops_gimmick_count = count(chart_dict['STOPS']) + count(chart_dict['DELAYS'])
                 scroll_speed_gimmick_count = count(chart_dict['SPEEDS']) + count(chart_dict['SCROLLS'])
-                converted_chart = convert_chart(chart_dict['NOTES'])
+                finest_note_division = convert_chart(chart_dict['NOTES'])[1]
 
-                output.append([title, artist, bpm, length, bpm_change_count, stops_gimmick_count, scroll_speed_gimmick_count])
+                converted_chart = convert_chart(chart_dict['NOTES'])[0]
+
+                output.append([title, artist, bpm, length, bpm_change_count, stops_gimmick_count, scroll_speed_gimmick_count, finest_note_division])
 
 with open(mode + level + '.csv', 'w', newline='', encoding="utf-8") as file:
     writer = csv.writer(file)
