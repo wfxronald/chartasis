@@ -1,12 +1,11 @@
 import copy
 
 def have_steps(row):
-    # TODO: need to handle holds
     steps = []
     for index in range(len(row)):
         step = row[index]
         if step != '0':
-            steps.append(index+1)
+            steps.append((index+1, step))
     return steps
 
 def det_mode(row):
@@ -50,19 +49,31 @@ def convert_to_lr(array_format):
             array_of_arrows = have_steps(row)
 
             if len(array_of_arrows) == 2:  # jumps
-                left_arrow = array_of_arrows[0]
-                right_arrow = array_of_arrows[1]
-                row[left_arrow-1] = 'X'
-                row[right_arrow-1] = 'Y'
+                left_arrow = array_of_arrows[0][0]
+                left_type = array_of_arrows[0][1]
+                right_arrow = array_of_arrows[1][0]
+                right_type = array_of_arrows[1][1]
+                if left_type == '1':
+                    row[left_arrow-1] = 'X'
+                elif left_type == '2':
+                    row[left_arrow-1] = 'x'
+                if right_type == '1':
+                    row[right_arrow-1] = 'Y'
+                elif right_type == '2':
+                    row[right_arrow-1] = 'y'
                 prev_step = [('X', left_arrow), ('Y', right_arrow)]
             elif len(array_of_arrows) > 2:
                 pass
                 # TODO: need to handle triples, brackets
             else:  # single arrow
-                arrow = array_of_arrows[0]
+                arrow = array_of_arrows[0][0]
+                arrow_type = array_of_arrows[0][1]
                 if not prev_step:
                     foot = det_first_foot(mode, arrow)
-                    row[arrow-1] = foot
+                    if arrow_type == '1':
+                        row[arrow-1] = foot
+                    elif arrow_type == '2':
+                        row[arrow-1] = foot.lower()
                     prev_step = [(foot, arrow)]
                 elif len(prev_step) == 1:
                     tup = prev_step[0]
@@ -70,7 +81,10 @@ def convert_to_lr(array_format):
                     prev_arrow = tup[1]
 
                     if prev_arrow == arrow:  # repeated tap
-                        row[arrow-1] = prev_foot
+                        if arrow_type == '1':
+                            row[arrow-1] = prev_foot
+                        elif arrow_type == '2':
+                            row[arrow-1] = prev_foot.lower()
                         # no change to prev_step: same foot, same arrow
                     else:  # change leg every time
                         if prev_foot != 'Z':
@@ -78,20 +92,29 @@ def convert_to_lr(array_format):
                         else:
                             # TODO: the previous foot must change too
                             next_foot = det_first_foot(mode, arrow)
-                        row[arrow-1] = next_foot
+                        if arrow_type == '1':
+                            row[arrow-1] = next_foot
+                        elif arrow_type == '2':
+                            row[arrow-1] = next_foot.lower()
                         prev_step = [(next_foot, arrow)]
                 else:
                     same_foot = False
                     for tup in prev_step:
                         if tup[1] == arrow:
                             same_foot = True
-                            row[arrow-1] = tup[0]
+                            if arrow_type == '1':
+                                row[arrow-1] = tup[0]
+                            elif arrow_type == '2':
+                                row[arrow-1] = tup[0].lower()
                             prev_step = [(tup[0], tup[1])]
                             break
 
                     if not same_foot:
                         foot = det_first_foot(mode, arrow)  # pretty much reset like beginning
-                        row[arrow-1] = foot
+                        if arrow_type == '1':
+                            row[arrow-1] = foot
+                        elif arrow_type == '2':
+                            row[arrow-1] = foot.lower()
                         prev_step = [(foot, arrow)]
 
     return result
