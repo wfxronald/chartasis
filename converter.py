@@ -78,6 +78,12 @@ def det_jump_foot(left_arrow, right_arrow, prev_step):
     return ('X', 'Y')  # if completely new jumps
     # TODO: need to take care of exception in middle fours
 
+def det_type(foot, type):
+    if type == '1':
+        return foot.upper()
+    elif type == '2':
+        return foot.lower()
+
 # Main function
 def convert_to_lr(array_format):
     result = copy.deepcopy(array_format)
@@ -91,72 +97,54 @@ def convert_to_lr(array_format):
             array_of_arrows = have_steps(row)  # format: [(5, '1'), (6, '1')]
 
             if len(array_of_arrows) == 2:  # jumps
-                left_arrow, left_type = array_of_arrows[0][0], array_of_arrows[0][1]
-                right_arrow, right_type = array_of_arrows[1][0], array_of_arrows[1][1]
+                left_arrow, left_type = array_of_arrows[0]
+                right_arrow, right_type = array_of_arrows[1]
                 jump_foot = det_jump_foot(left_arrow, right_arrow, prev_step)
                 prev_step = copy_hold_from_list(prev_step)
 
-                if left_type == '1':
-                    next_left = jump_foot[0].upper()
-                elif left_type == '2':
-                    next_left = jump_foot[0].lower()
+                if left_type != '3':
+                    next_left = det_type(jump_foot[0], left_type)
+                    row[left_arrow-1] = next_left
+                    prev_step.append((next_left, left_arrow))
                 else:
                     prev_step = remove_hold_from_list(prev_step, left_arrow)
 
-                if left_type != '3':
-                    row[left_arrow-1] = next_left
-                    prev_step.append((next_left, left_arrow))
-
-
-                if right_type == '1':
-                    next_right = jump_foot[1].upper()
-                elif right_type == '2':
-                    next_right = jump_foot[1].lower()
-                else:
-                    prev_step = remove_hold_from_list(prev_step, right_arrow)
-
                 if right_type != '3':
+                    next_right = det_type(jump_foot[1], right_type)
                     row[right_arrow-1] = next_right
                     prev_step.append((next_right, right_arrow))
+                else:
+                    prev_step = remove_hold_from_list(prev_step, right_arrow)
 
             elif len(array_of_arrows) > 2:
                 pass
                 # TODO: need to handle triples, brackets
 
             else:  # single arrow
-                arrow, arrow_type = array_of_arrows[0][0], array_of_arrows[0][1]
+                arrow, arrow_type = array_of_arrows[0]
 
                 if not prev_step:  # first step
                     foot = det_first_foot(arrow)
-
                     prev_step = copy_hold_from_list(prev_step)
-                    if arrow_type == '1':
-                        next_foot = foot.upper()
-                    elif arrow_type == '2':
-                        next_foot = foot.lower()
+                    if arrow_type != '3':
+                        next_foot = det_type(foot, arrow_type)
+                        row[arrow-1] = next_foot
+                        prev_step.append((next_foot, arrow))
                     else:  # arrow_type == '3'
                         pass  # will never see hold tip in the beginning
 
-                    if arrow_type != '3':
-                        row[arrow-1] = next_foot
-                        prev_step.append((next_foot, arrow))
-
                 elif len(prev_step) == 1:  # after a single step
                     tup = prev_step[0]
-                    prev_foot, prev_arrow = tup[0], tup[1]
+                    prev_foot, prev_arrow = tup
 
                     if prev_arrow == arrow:  # repeated tap, same foot
                         prev_step = copy_hold_from_list(prev_step)
-                        if arrow_type == '1':
-                            next_foot = prev_foot.upper()
-                        elif arrow_type == '2':
-                            next_foot = prev_foot.lower()
-                        else:
-                            prev_step = remove_hold_from_list(prev_step, arrow)
-
                         if arrow_type != '3':
+                            next_foot = det_type(prev_foot, arrow_type)
                             row[arrow-1] = next_foot
                             prev_step.append((next_foot, arrow))
+                        else:
+                            prev_step = remove_hold_from_list(prev_step, arrow)        
                         
                     else:  # change leg every time
                         if prev_foot != 'Z':
@@ -166,16 +154,12 @@ def convert_to_lr(array_format):
                             foot = det_first_foot(arrow, prev_step)
 
                         prev_step = copy_hold_from_list(prev_step)
-                        if arrow_type == '1':
-                            next_foot = foot.upper()
-                        elif arrow_type == '2':
-                            next_foot = foot.lower()
-                        else:
-                            prev_step = remove_hold_from_list(prev_step, arrow)
-
                         if arrow_type != '3':
+                            next_foot = det_type(foot, arrow_type)
                             row[arrow-1] = next_foot
                             prev_step.append((next_foot, arrow))
+                        else:
+                            prev_step = remove_hold_from_list(prev_step, arrow)
 
                 else:  # after a jump, triple, etc
                     same_foot = False
@@ -183,31 +167,23 @@ def convert_to_lr(array_format):
                         if tup[1] == arrow:
                             same_foot = True
                             prev_step = copy_hold_from_list(prev_step)
-                            if arrow_type == '1':
-                                next_foot = tup[0].upper()
-                            elif arrow_type == '2':
-                                next_foot = tup[0].lower()
-                            else:
-                                prev_step = remove_hold_from_list(prev_step, arrow)
-
                             if arrow_type != '3':
+                                next_foot = det_type(tup[0], arrow_type)
                                 row[arrow-1] = next_foot
                                 prev_step.append((next_foot, arrow))
+                            else:
+                                prev_step = remove_hold_from_list(prev_step, arrow)
                             break
 
                     if not same_foot:
                         foot = det_first_foot(arrow, prev_step)  # pretty much reset like beginning
 
                         prev_step = copy_hold_from_list(prev_step)
-                        if arrow_type == '1':
-                            next_foot = foot.upper()
-                        elif arrow_type == '2':
-                            next_foot = foot.lower()
-                        else:
-                            prev_step = remove_hold_from_list(prev_step, arrow)
-
                         if arrow_type != '3':
+                            next_foot = det_type(foot, arrow_type)
                             row[arrow-1] = next_foot
                             prev_step.append((next_foot, arrow))
+                        else:
+                            prev_step = remove_hold_from_list(prev_step, arrow)
 
     return result
