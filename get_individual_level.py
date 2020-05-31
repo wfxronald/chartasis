@@ -69,7 +69,10 @@ def convert_chart(string_format):
                 stepf2_note += char
                 continue
 
-            row.append(char)
+            if char == 'F':  # ignore fake notes
+            	row.append('0')
+            else:
+            	row.append(char)
 
         # Ensure that the length is correct for either singles or doubles
         if len(row) != 5 and len(row) != 10:
