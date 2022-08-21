@@ -30,7 +30,7 @@ def clean_meta_information(metas, wanted_key):
 		split_key_value = meta.split(":")
 
 		# ignore dirty data
-		if len(split_key_value) != 2:
+		if len(split_key_value) < 2:
 			continue
 
 		key = clean_key(split_key_value[0])
@@ -67,6 +67,8 @@ def parse_chart(data):
 		cleaned_step_meta = clean_meta_information(step_meta, wanted_key)
 		chart['step_meta'] = cleaned_step_meta
 
+		if 'DESCRIPTION' not in chart['step_meta']:
+			continue
 		if not is_chart_ucs(chart) and not is_chart_dp(chart) and not is_chart_sp(chart):
 			charts.append(chart)
 
